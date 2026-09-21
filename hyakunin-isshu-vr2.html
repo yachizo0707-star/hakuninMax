@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>百人一首 学習帖</title>
+<style>
+  :root{
+    --washi:#faf5ea;
+    --washi2:#f3ead9;
+    --ink:#2c2620;
+    --ink-soft:#5a4f42;
+    --crimson:#a13d3d;
+    --crimson-deep:#7f2d2d;
+    --gold:#b5872b;
+    --gold-soft:#e3cd93;
+    --green-ok:#3f7a52;
+    --red-ng:#b23b3b;
+    --card-shadow: 0 4px 14px rgba(60,40,20,0.12);
+    box-sizing:border-box;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:
+      radial-gradient(circle at 20% 10%, #fffaf0 0%, var(--washi) 45%, var(--washi2) 100%);
+    color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    font-size:16px;
+    -webkit-text-size-adjust:100%;
+  }
+  #app{
+    min-height:100%;
+    max-width:520px;
+    margin:0 auto;
+    padding:calc(env(safe-area-inset-top,0px) + 18px) 16px calc(env(safe-area-inset-bottom,0px) + 24px);
+    display:flex;
+    flex-direction:column;
+  }
+  h1.title{
+    text-align:center;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    font-size:26px;
+    letter-spacing:0.12em;
+    color:var(--crimson-deep);
+    margin:4px 0 2px;
+  }
+  p.subtitle{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:0 0 20px;
+    letter-spacing:0.05em;
+  }
+  .section-label{
+    font-size:13px;
+    font-weight:bold;
+    color:var(--gold);
+    margin:18px 0 8px 4px;
+    letter-spacing:0.08em;
+    border-left:4px solid var(--gold);
+    padding-left:8px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .choice-btn{
+    -webkit-appearance:none;
+    appearance:none;
+    border:2px solid var(--gold-soft);
+    background:#fff;
+    color:var(--ink);
+    border-radius:14px;
+    padding:14px 10px;
+    font-size:15px;
+    font-weight:bold;
+    text-align:center;
+    box-shadow:var(--card-shadow);
+    transition:transform .08s ease, border-color .15s ease, background .15s ease;
+  }
+  .choice-btn:active{transform:scale(0.97);}
+  .choice-btn.selected{
+    border-color:var(--crimson);
+    background:linear-gradient(180deg,#fff,#fdeeee);
+    color:var(--crimson-deep);
+  }
+  .choice-btn small{display:block;font-weight:normal;font-size:11px;color:var(--ink-soft);margin-top:3px;}
+  .range-grid{grid-template-columns:1fr 1fr 1fr;}
+  .range-btn{
+    -webkit-appearance:none;
+    border:2px solid var(--gold-soft);
+    background:#fff;
+    border-radius:12px;
+    padding:12px 4px;
+    font-size:14px;
+    font-weight:bold;
+    color:var(--ink);
+    box-shadow:var(--card-shadow);
+  }
+  .range-btn.selected{
+    border-color:var(--crimson);
+    background:linear-gradient(180deg,#fff,#fdeeee);
+    color:var(--crimson-deep);
+  }
+  .weak-btn{
+    margin-top:10px;
+    width:100%;
+    -webkit-appearance:none;
+    border:2px dashed var(--crimson);
+    background:#fff8f4;
+    color:var(--crimson-deep);
+    border-radius:14px;
+    padding:14px;
+    font-size:15px;
+    font-weight:bold;
+  }
+  .weak-btn:disabled{opacity:0.45;}
+  .weak-count{
+    display:inline-block;
+    background:var(--crimson);
+    color:#fff;
+    border-radius:999px;
+    font-size:12px;
+    padding:1px 9px;
+    margin-left:6px;
+  }
+  .start-btn{
+    margin-top:22px;
+    width:100%;
+    -webkit-appearance:none;
+    border:none;
+    background:linear-gradient(135deg,var(--crimson),var(--crimson-deep));
+    color:#fff;
+    border-radius:16px;
+    padding:16px;
+    font-size:17px;
+    font-weight:bold;
+    letter-spacing:0.08em;
+    box-shadow:0 6px 16px rgba(161,61,61,0.35);
+  }
+  .start-btn:disabled{
+    background:#cbbfae;
+    box-shadow:none;
+  }
+  .hidden{display:none !important;}
+
+  /* quiz screen */
+  .quiz-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .progress-bar-outer{
+    background:#e8dcc4;
+    height:7px;
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .progress-bar-inner{
+    background:var(--crimson);
+    height:100%;
+    width:0%;
+    transition:width .25s ease;
+  }
+  .mode-tag{
+    display:inline-block;
+    background:var(--washi2);
+    border:1px solid var(--gold-soft);
+    color:var(--gold);
+    font-size:11px;
+    font-weight:bold;
+    border-radius:999px;
+    padding:2px 10px;
+    margin-bottom:10px;
+  }
+  .question-card{
+    background:#fffdf8;
+    border:1px solid var(--gold-soft);
+    border-radius:18px;
+    padding:22px 18px;
+    box-shadow:var(--card-shadow);
+    text-align:center;
+    margin-bottom:18px;
+    min-height:96px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .question-text{
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    font-size:19px;
+    line-height:1.75;
+    color:var(--ink);
+    white-space:pre-line;
+  }
+  .question-text .blank{
+    color:var(--crimson);
+    font-weight:bold;
+    letter-spacing:0.05em;
+  }
+  .answers{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .answer-btn{
+    -webkit-appearance:none;
+    text-align:left;
+    border:2px solid var(--gold-soft);
+    background:#fff;
+    border-radius:14px;
+    padding:14px 16px;
+    font-size:15.5px;
+    color:var(--ink);
+    line-height:1.5;
+    box-shadow:var(--card-shadow);
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  }
+  .answer-btn:active{transform:scale(0.985);}
+  .answer-btn.correct{
+    border-color:var(--green-ok);
+    background:linear-gradient(180deg,#fff,#eef7ef);
+    color:var(--green-ok);
+    font-weight:bold;
+  }
+  .answer-btn.wrong{
+    border-color:var(--red-ng);
+    background:linear-gradient(180deg,#fff,#fbecec);
+    color:var(--red-ng);
+    font-weight:bold;
+  }
+  .answer-btn.disabled{opacity:0.55;}
+  .feedback{
+    margin:14px 0 4px;
+    text-align:center;
+    font-size:15px;
+    font-weight:bold;
+    min-height:22px;
+  }
+  .feedback.ok{color:var(--green-ok);}
+  .feedback.ng{color:var(--red-ng);}
+  .poem-meta{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .next-btn{
+    margin-top:16px;
+    width:100%;
+    -webkit-appearance:none;
+    border:none;
+    background:var(--ink);
+    color:#fff;
+    border-radius:14px;
+    padding:14px;
+    font-size:15px;
+    font-weight:bold;
+  }
+  .quit-link{
+    text-align:center;
+    margin-top:16px;
+    font-size:13px;
+    color:var(--ink-soft);
+    text-decoration:underline;
+    padding:6px;
+  }
+
+  /* result screen */
+  .result-score{
+    text-align:center;
+    margin:20px 0 6px;
+  }
+  .result-score .num{
+    font-size:44px;
+    font-weight:bold;
+    color:var(--crimson-deep);
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  }
+  .result-score .label{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .result-comment{
+    text-align:center;
+    font-size:14px;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+  }
+  .miss-list{
+    background:#fff;
+    border:1px solid var(--gold-soft);
+    border-radius:14px;
+    padding:6px 14px;
+    margin-bottom:16px;
+  }
+  .miss-item{
+    padding:10px 0;
+    border-bottom:1px solid #f0e6d2;
+    font-size:14px;
+  }
+  .miss-item:last-child{border-bottom:none;}
+  .miss-item .mi-no{color:var(--gold);font-weight:bold;font-size:12px;margin-right:4px;}
+  .miss-item .mi-kami{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;}
+  .miss-item .mi-shimo{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;color:var(--ink-soft);}
+  .miss-item .mi-author{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .btn-row{display:flex;gap:10px;margin-top:6px;}
+  .btn-row .half{
+    flex:1;
+    -webkit-appearance:none;
+    border:2px solid var(--gold-soft);
+    background:#fff;
+    border-radius:14px;
+    padding:14px;
+    font-size:14.5px;
+    font-weight:bold;
+    color:var(--ink);
+  }
+  .btn-row .half.primary{
+    border:none;
+    background:linear-gradient(135deg,var(--crimson),var(--crimson-deep));
+    color:#fff;
+  }
+
+  /* weak note management screen */
+  .wn-item{
+    background:#fff;
+    border:1px solid var(--gold-soft);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .wn-text{flex:1;}
+  .wn-text .wn-kami{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:14.5px;}
+  .wn-text .wn-shimo{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:13.5px;color:var(--ink-soft);}
+  .wn-text .wn-author{font-size:11.5px;color:var(--gold);margin-top:2px;}
+  .wn-remove{
+    -webkit-appearance:none;
+    border:1px solid var(--red-ng);
+    background:#fff;
+    color:var(--red-ng);
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .empty-note{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:14px;
+    padding:30px 10px;
+  }
+  .back-link{
+    text-align:center;
+    margin-top:18px;
+    font-size:14px;
+    color:var(--crimson-deep);
+    font-weight:bold;
+    padding:10px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== ホーム画面 ===== -->
+  <div id="screen-home">
+    <h1 class="title">百人一首 学習帖</h1>
+    <p class="subtitle">上の句・下の句・作者をおぼえよう</p>
+
+    <div class="section-label">① 出題モードを選ぶ</div>
+    <div class="grid" id="mode-grid">
+      <button class="choice-btn" data-mode="kami2shimo">上の句 → 下の句<small>上の句から選ぶ</small></button>
+      <button class="choice-btn" data-mode="shimo2kami">下の句 → 上の句<small>下の句から選ぶ</small></button>
+      <button class="choice-btn" data-mode="fill">穴埋め問題<small>空欄をうめる</small></button>
+      <button class="choice-btn" data-mode="author">作者を選ぶ<small>歌から作者を当てる</small></button>
+    </div>
+
+    <div class="section-label">② 出題範囲を選ぶ（20問ずつ）</div>
+    <div class="grid range-grid" id="range-grid">
+      <button class="range-btn" data-range="1-20">1〜20</button>
+      <button class="range-btn" data-range="21-40">21〜40</button>
+      <button class="range-btn" data-range="41-60">41〜60</button>
+      <button class="range-btn" data-range="61-80">61〜80</button>
+      <button class="range-btn" data-range="81-100">81〜100</button>
+      <button class="range-btn" data-range="all">全100首</button>
+    </div>
+
+    <button class="weak-btn" id="weak-start-btn">
+      苦手ノートを復習する <span class="weak-count" id="weak-count">0</span>
+    </button>
+
+    <button class="start-btn" id="start-btn" disabled>はじめる</button>
+
+    <div class="quit-link" id="open-weak-manage">苦手ノートの中身を見る・整理する</div>
+  </div>
+
+  <!-- ===== クイズ画面 ===== -->
+  <div id="screen-quiz" class="hidden">
+    <div class="mode-tag" id="quiz-mode-tag"></div>
+    <div class="quiz-top">
+      <span id="quiz-progress-text">1 / 20</span>
+      <span id="quiz-score-text">正解 0</span>
+    </div>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar"></div></div>
+
+    <div class="question-card">
+      <div class="question-text" id="question-text"></div>
+    </div>
+
+    <div class="answers" id="answers-wrap"></div>
+
+    <div class="feedback" id="feedback-text"></div>
+    <div class="poem-meta" id="poem-meta"></div>
+
+    <button class="next-btn hidden" id="next-btn">次の問題へ</button>
+    <div class="quit-link" id="quit-quiz-btn">やめてホームに戻る</div>
+  </div>
+
+  <!-- ===== 結果画面 ===== -->
+  <div id="screen-result" class="hidden">
+    <h1 class="title">結果発表</h1>
+    <div class="result-score">
+      <span class="num" id="result-score-num">0</span><span class="label"> / <span id="result-score-total">20</span> 問正解</span>
+    </div>
+    <div class="result-comment" id="result-comment"></div>
+
+    <div id="result-miss-wrap"></div>
+
+    <div class="btn-row">
+      <button class="half" id="result-home-btn">ホームへ</button>
+      <button class="half primary" id="result-retry-btn">もう一度この範囲</button>
+    </div>
+  </div>
+
+  <!-- ===== 苦手ノート管理画面 ===== -->
+  <div id="screen-weak-manage" class="hidden">
+    <h1 class="title">苦手ノート</h1>
+    <p class="subtitle">まちがえた歌が自動でここに残ります</p>
+    <div id="weak-manage-list"></div>
+    <div class="back-link" id="weak-manage-back">← ホームへ戻る</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- 百人一首 100首データ ---------- */
+var POEMS = [
+{id:1,kami:"秋の田のかりほの庵の苫をあらみ",shimo:"わが衣手は露にぬれつつ",author:"天智天皇"},
+{id:2,kami:"春過ぎて夏来にけらし白妙の",shimo:"衣干すてふ天の香具山",author:"持統天皇"},
+{id:3,kami:"あしびきの山鳥の尾のしだり尾の",shimo:"ながながし夜をひとりかも寝む",author:"柿本人麻呂"},
+{id:4,kami:"田子の浦にうち出でて見れば白妙の",shimo:"富士の高嶺に雪は降りつつ",author:"山辺赤人"},
+{id:5,kami:"奥山に紅葉踏み分け鳴く鹿の",shimo:"声聞く時ぞ秋は悲しき",author:"猿丸大夫"},
+{id:6,kami:"鵲の渡せる橋に置く霜の",shimo:"白きを見れば夜ぞ更けにける",author:"中納言家持"},
+{id:7,kami:"天の原ふりさけ見れば春日なる",shimo:"三笠の山に出でし月かも",author:"安倍仲麿"},
+{id:8,kami:"わが庵は都の辰巳しかぞ住む",shimo:"世をうぢ山と人はいふなり",author:"喜撰法師"},
+{id:9,kami:"花の色は移りにけりないたづらに",shimo:"わが身世にふるながめせしまに",author:"小野小町"},
+{id:10,kami:"これやこの行くも帰るも別れては",shimo:"知るも知らぬもあふ坂の関",author:"蝉丸"},
+{id:11,kami:"わたの原八十島かけて漕ぎ出でぬと",shimo:"人には告げよ海人の釣船",author:"参議篁"},
+{id:12,kami:"天つ風雲の通ひ路吹きとぢよ",shimo:"乙女の姿しばしとどめむ",author:"僧正遍昭"},
+{id:13,kami:"筑波嶺の峰より落つるみなの川",shimo:"恋ぞ積もりて淵となりぬる",author:"陽成院"},
+{id:14,kami:"陸奥のしのぶもぢずりたれゆえに",shimo:"乱れそめにしわれならなくに",author:"河原左大臣"},
+{id:15,kami:"君がため春の野に出でて若菜摘む",shimo:"わが衣手に雪は降りつつ",author:"光孝天皇"},
+{id:16,kami:"立ち別れいなばの山の峰に生ふる",shimo:"まつとし聞かば今帰り来む",author:"中納言行平"},
+{id:17,kami:"ちはやぶる神代も聞かず竜田川",shimo:"からくれなゐに水くくるとは",author:"在原業平朝臣"},
+{id:18,kami:"住の江の岸に寄る波よるさへや",shimo:"夢の通ひ路人目よくらむ",author:"藤原敏行朝臣"},
+{id:19,kami:"難波潟短き蘆のふしの間も",shimo:"逢はでこの世を過ぐしてよとや",author:"伊勢"},
+{id:20,kami:"わびぬれば今はたおなじ難波なる",shimo:"みをつくしても逢はむとぞ思ふ",author:"元良親王"},
+{id:21,kami:"今来むといひしばかりに長月の",shimo:"有明の月を待ち出でつるかな",author:"素性法師"},
+{id:22,kami:"吹くからに秋の草木のしをるれば",shimo:"むべ山風をあらしといふらむ",author:"文屋康秀"},
+{id:23,kami:"月見ればちぢにものこそ悲しけれ",shimo:"わが身ひとつの秋にはあらねど",author:"大江千里"},
+{id:24,kami:"このたびは幣も取りあへず手向山",shimo:"紅葉の錦神のまにまに",author:"菅家"},
+{id:25,kami:"名にし負はば逢う坂山のさねかずら",shimo:"人に知られで来るよしもがな",author:"三条右大臣"},
+{id:26,kami:"小倉山峰の紅葉葉心あらば",shimo:"いまひとたびのみゆき待たなむ",author:"貞信公"},
+{id:27,kami:"みかの原わきて流るるいづみ川",shimo:"いつ見きとてか恋しかるらむ",author:"中納言兼輔"},
+{id:28,kami:"山里は冬ぞ寂しさまさりける",shimo:"人目も草もかれぬと思へば",author:"源宗于朝臣"},
+{id:29,kami:"心あてに折らばや折らむ初霜の",shimo:"置きまどはせる白菊の花",author:"凡河内躬恒"},
+{id:30,kami:"有明のつれなく見えし別れより",shimo:"暁ばかり憂きものはなし",author:"壬生忠岑"},
+{id:31,kami:"朝ぼらけ有明の月と見るまでに",shimo:"吉野の里に降れる白雪",author:"坂上是則"},
+{id:32,kami:"山川に風のかけたるしがらみは",shimo:"流れもあへぬ紅葉なりけり",author:"春道列樹"},
+{id:33,kami:"ひさかたの光のどけき春の日に",shimo:"しづ心なく花の散るらむ",author:"紀友則"},
+{id:34,kami:"誰をかも知る人にせむ高砂の",shimo:"松も昔の友ならなくに",author:"藤原興風"},
+{id:35,kami:"人はいさ心も知らずふるさとは",shimo:"花ぞ昔の香に匂ひける",author:"紀貫之"},
+{id:36,kami:"夏の夜はまだ宵ながら明けぬるを",shimo:"雲のいずこに月宿るらむ",author:"清原深養父"},
+{id:37,kami:"白露に風の吹きしく秋の野は",shimo:"つらぬきとめぬ玉ぞ散りける",author:"文屋朝康"},
+{id:38,kami:"忘らるる身をば思はず誓ひてし",shimo:"人の命の惜しくもあるかな",author:"右近"},
+{id:39,kami:"浅茅生の小野の篠原忍ぶれど",shimo:"あまりてなどか人の恋しき",author:"参議等"},
+{id:40,kami:"忍ぶれど色に出でにけりわが恋は",shimo:"ものや思ふと人の問ふまで",author:"平兼盛"},
+{id:41,kami:"恋すてふわが名はまだき立ちにけり",shimo:"人知れずこそ思ひそめしか",author:"壬生忠見"},
+{id:42,kami:"契りきなかたみに袖をしぼりつつ",shimo:"末の松山波越さじとは",author:"清原元輔"},
+{id:43,kami:"逢ひ見てののちの心にくらぶれば",shimo:"昔はものを思はざりけり",author:"権中納言敦忠"},
+{id:44,kami:"逢ふことの絶えてしなくはなかなかに",shimo:"人をも身をも恨みざらまし",author:"中納言朝忠"},
+{id:45,kami:"あはれともいふべき人は思ほえで",shimo:"身のいたずらになりぬべきかな",author:"謙徳公"},
+{id:46,kami:"由良の門を渡る舟人かぢを絶え",shimo:"ゆくへも知らぬ恋のみちかな",author:"曾禰好忠"},
+{id:47,kami:"八重むぐら茂れる宿の寂しきに",shimo:"人こそ見えね秋は来にけり",author:"恵慶法師"},
+{id:48,kami:"風をいたみ岩打つ波のおのれのみ",shimo:"くだけてものを思ふころかな",author:"源重之"},
+{id:49,kami:"御垣守衛士のたく火の夜は燃え",shimo:"昼は消えつつものをこそ思へ",author:"大中臣能宣朝臣"},
+{id:50,kami:"君がため惜しからざりし命さへ",shimo:"長くもがなと思ひけるかな",author:"藤原義孝"},
+{id:51,kami:"かくとだにえやは伊吹のさしも草",shimo:"さしも知らじな燃ゆる思ひを",author:"藤原実方朝臣"},
+{id:52,kami:"明けぬれば暮るるものとは知りながら",shimo:"なほ恨めしき朝ぼらけかな",author:"藤原道信朝臣"},
+{id:53,kami:"嘆きつつひとり寝る夜の明くる間は",shimo:"いかに久しきものとかは知る",author:"右大将道綱母"},
+{id:54,kami:"忘れじのゆく末まではかたければ",shimo:"今日を限りの命ともがな",author:"儀同三司母"},
+{id:55,kami:"滝の音は絶えて久しくなりぬれど",shimo:"名こそ流れてなほ聞こえけれ",author:"大納言公任"},
+{id:56,kami:"あらざらむこの世のほかの思ひ出に",shimo:"いまひとたびの逢ふこともがな",author:"和泉式部"},
+{id:57,kami:"めぐり逢ひて見しやそれとも分かぬ間に",shimo:"雲隠れにし夜半の月影",author:"紫式部"},
+{id:58,kami:"有馬山猪名の篠原風吹けば",shimo:"いでそよ人を忘れやはする",author:"大弐三位"},
+{id:59,kami:"やすらはで寝なましものをさ夜更けて",shimo:"かたぶくまでの月を見しかな",author:"赤染衛門"},
+{id:60,kami:"大江山いく野の道の遠ければ",shimo:"まだふみも見ず天の橋立",author:"小式部内侍"},
+{id:61,kami:"いにしへの奈良の都の八重桜",shimo:"けふ九重に匂ひぬるかな",author:"伊勢大輔"},
+{id:62,kami:"夜をこめて鳥のそら音ははかるとも",shimo:"よに逢坂の関は許さじ",author:"清少納言"},
+{id:63,kami:"今はただ思ひ絶えなむとばかりを",shimo:"人づてならでいふよしもがな",author:"左京大夫道雅"},
+{id:64,kami:"朝ぼらけ宇治の川霧たえだえに",shimo:"あらはれわたる瀬々の網代木",author:"権中納言定頼"},
+{id:65,kami:"恨みわび干さぬ袖だにあるものを",shimo:"恋に朽ちなむ名こそ惜しけれ",author:"相模"},
+{id:66,kami:"もろともにあはれと思え山桜",shimo:"花よりほかに知る人もなし",author:"前大僧正行尊"},
+{id:67,kami:"春の夜の夢ばかりなる手枕に",shimo:"かひなく立たむ名こそをしけれ",author:"周防内侍"},
+{id:68,kami:"心にもあらで憂き夜に長らへば",shimo:"恋しかるべき夜半の月かな",author:"三条院"},
+{id:69,kami:"嵐吹く三室の山のもみぢ葉は",shimo:"竜田の川の錦なりけり",author:"能因法師"},
+{id:70,kami:"寂しさに宿を立ち出でてながむれば",shimo:"いづくも同じ秋の夕暮れ",author:"良暹法師"},
+{id:71,kami:"夕されば門田の稲葉訪れて",shimo:"蘆のまろ屋に秋風ぞ吹く",author:"大納言経信"},
+{id:72,kami:"音に聞く高師の浜のあだ波は",shimo:"かけじや袖のぬれもこそすれ",author:"祐子内親王家紀伊"},
+{id:73,kami:"高砂の尾の上の桜咲きにけり",shimo:"外山のかすみ立たずもあらなむ",author:"前権中納言匡房"},
+{id:74,kami:"憂かりける人を初瀬の山おろしよ",shimo:"激しかれとは祈らぬものを",author:"源俊頼朝臣"},
+{id:75,kami:"契りおきしさせもが露を命にて",shimo:"あはれ今年の秋もいぬめり",author:"藤原基俊"},
+{id:76,kami:"わたの原漕ぎ出でて見ればひさかたの",shimo:"雲居にまがふ沖つ白波",author:"法性寺入道前関白太政大臣"},
+{id:77,kami:"瀬をはやみ岩にせかるる滝川の",shimo:"われても末に逢はむとぞ思ふ",author:"崇徳院"},
+{id:78,kami:"淡路島通ふ千鳥の鳴く声に",shimo:"いく夜寝覚めぬ須磨の関守",author:"源兼昌"},
+{id:79,kami:"秋風にたなびく雲のたえ間より",shimo:"漏れ出づる月の影のさやけさ",author:"左京大夫顕輔"},
+{id:80,kami:"ながからむ心も知らず黒髪の",shimo:"乱れてけさはものをこそ思へ",author:"待賢門院堀河"},
+{id:81,kami:"ほととぎす鳴きつる方をながむれば",shimo:"ただ有明の月ぞ残れる",author:"後徳大寺左大臣"},
+{id:82,kami:"思ひわびさても命はあるものを",shimo:"憂きに堪へぬは涙なりけり",author:"道因法師"},
+{id:83,kami:"世の中よ道こそなけれ思ひ入る",shimo:"山の奥にも鹿ぞ鳴くなる",author:"皇太后宮大夫俊成"},
+{id:84,kami:"長らへばまたこのごろやしのばれむ",shimo:"憂しと見し世ぞ今は恋しき",author:"藤原清輔朝臣"},
+{id:85,kami:"夜もすがらもの思ふころは明けやらぬ",shimo:"ねやのひまさへつれなかりけり",author:"俊恵法師"},
+{id:86,kami:"嘆けとて月やはものを思はする",shimo:"かこちがほなるわが涙かな",author:"西行法師"},
+{id:87,kami:"村雨の露もまだ干ぬまきの葉に",shimo:"霧立ちのぼる秋の夕暮",author:"寂蓮法師"},
+{id:88,kami:"難波江の蘆のかりねのひとよゆゑ",shimo:"身を尽くしてや恋ひわたるべき",author:"皇嘉門院別当"},
+{id:89,kami:"玉の緒よ絶えなば絶えねながらへば",shimo:"忍ぶることの弱りもぞする",author:"式子内親王"},
+{id:90,kami:"見せばやな雄島の海人の袖だにも",shimo:"濡れにぞ濡れし色は変はらず",author:"殷富門院大輔"},
+{id:91,kami:"きりぎりす鳴くや霜夜のさむしろに",shimo:"衣かたしきひとりかも寝む",author:"後京極摂政前太政大臣"},
+{id:92,kami:"わが袖は潮干に見えぬ沖の石の",shimo:"人こそ知らねかわく間もなし",author:"二条院讃岐"},
+{id:93,kami:"世の中は常にもがもな渚漕ぐ",shimo:"海人の小舟の綱手かなしも",author:"鎌倉右大臣"},
+{id:94,kami:"み吉野の山の秋風さよ更けて",shimo:"ふるさと寒く衣打つなり",author:"参議雅経"},
+{id:95,kami:"おほけなく憂き世の民におほふかな",shimo:"わが立つ杣にすみ染の袖",author:"前大僧正慈円"},
+{id:96,kami:"花さそふ嵐の庭の雪ならで",shimo:"ふりゆくものはわが身なりけり",author:"入道前太政大臣"},
+{id:97,kami:"来ぬ人を松帆の浦の夕なぎに",shimo:"焼くや藻塩の身もこがれつつ",author:"権中納言定家"},
+{id:98,kami:"風そよぐ楢の小川の夕暮は",shimo:"御禊ぞ夏のしるしなりける",author:"従二位家隆"},
+{id:99,kami:"人も愛し人も恨めしあじきなく",shimo:"世を思ふゆゑにもの思ふ身は",author:"後鳥羽院"},
+{id:100,kami:"百敷や古き軒端のしのぶにも",shimo:"なほ余りある昔なりけり",author:"順徳院"}
+];
+var POEM_BY_ID = {};
+POEMS.forEach(function(p){ POEM_BY_ID[p.id]=p; });
+
+/* ---------- 苦手ノート（localStorage） ---------- */
+var WEAK_KEY = "hyakuninIsshu_weakList_v1";
+function loadWeak(){
+  try{
+    var raw = localStorage.getItem(WEAK_KEY);
+    if(!raw) return [];
+    var arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return [];
+    return arr.filter(function(id){ return POEM_BY_ID[id]; });
+  }catch(e){ return []; }
+}
+function saveWeak(list){
+  try{ localStorage.setItem(WEAK_KEY, JSON.stringify(list)); }catch(e){}
+}
+function addWeak(id){
+  var list = loadWeak();
+  if(list.indexOf(id) === -1){ list.push(id); saveWeak(list); }
+  refreshWeakCount();
+}
+function removeWeak(id){
+  var list = loadWeak().filter(function(x){ return x!==id; });
+  saveWeak(list);
+  refreshWeakCount();
+}
+function refreshWeakCount(){
+  var n = loadWeak().length;
+  document.getElementById("weak-count").textContent = String(n);
+  document.getElementById("weak-start-btn").disabled = (n===0);
+}
+
+/* ---------- ユーティリティ ---------- */
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function sampleOthers(poem, n){
+  var pool = POEMS.filter(function(p){ return p.id!==poem.id; });
+  return shuffle(pool).slice(0,n);
+}
+
+/* ---------- 問題生成 ---------- */
+function buildQuestion(poem, mode){
+  if(mode==="kami2shimo"){
+    var others = sampleOthers(poem,3);
+    var choices = shuffle([poem.shimo].concat(others.map(function(p){return p.shimo;})));
+    return {
+      modeLabel:"上の句 → 下の句",
+      questionText: poem.kami,
+      choices: choices,
+      correct: poem.shimo,
+      meta: poem.id+"番 "+poem.author
+    };
+  }
+  if(mode==="shimo2kami"){
+    var others2 = sampleOthers(poem,3);
+    var choices2 = shuffle([poem.kami].concat(others2.map(function(p){return p.kami;})));
+    return {
+      modeLabel:"下の句 → 上の句",
+      questionText: poem.shimo,
+      choices: choices2,
+      correct: poem.kami,
+      meta: poem.id+"番 "+poem.author
+    };
+  }
+  if(mode==="author"){
+    var others3 = sampleOthers(poem,3);
+    var choices3 = shuffle([poem.author].concat(others3.map(function(p){return p.author;})));
+    return {
+      modeLabel:"作者を選ぶ",
+      questionText: poem.kami+"\n"+poem.shimo,
+      choices: choices3,
+      correct: poem.author,
+      meta: poem.id+"番"
+    };
+  }
+  if(mode==="fill"){
+    var useKami = Math.random()<0.5;
+    var text = useKami ? poem.kami : poem.shimo;
+    var maxLen = Math.min(7, text.length-2);
+    var minLen = Math.min(4, maxLen);
+    var blankLen = randInt(minLen, Math.max(minLen,maxLen));
+    var startMax = text.length - blankLen;
+    var start = randInt(0, Math.max(0,startMax));
+    var blank = text.slice(start, start+blankLen);
+    var displayed = text.slice(0,start) + "《" + "○".repeat(blankLen) + "》" + text.slice(start+blankLen);
+    var fullDisplay = useKami ? (displayed+"\n"+poem.shimo) : (poem.kami+"\n"+displayed);
+
+    // 距離を持つダミー候補（他の歌の同じ側の句から同じ長さで切り出す）
+    var distractPool = sampleOthers(poem,6);
+    var distractors = [];
+    for(var i=0;i<distractPool.length && distractors.length<3;i++){
+      var dp = distractPool[i];
+      var dtext = useKami ? dp.kami : dp.shimo;
+      if(dtext.length < blankLen) continue;
+      var dstart = randInt(0, dtext.length-blankLen);
+      var cand = dtext.slice(dstart, dstart+blankLen);
+      if(cand!==blank && distractors.indexOf(cand)===-1){
+        distractors.push(cand);
+      }
+    }
+    while(distractors.length<3){
+      var extra = POEMS[randInt(0,99)];
+      var etext = useKami ? extra.kami : extra.shimo;
+      if(etext.length>=blankLen){
+        var es = randInt(0, etext.length-blankLen);
+        var ec = etext.slice(es, es+blankLen);
+        if(ec!==blank && distractors.indexOf(ec)===-1) distractors.push(ec);
+      }
+    }
+    var choices4 = shuffle([blank].concat(distractors));
+    return {
+      modeLabel:"穴埋め問題（"+(useKami?"上の句":"下の句")+"）",
+      questionText: fullDisplay,
+      choices: choices4,
+      correct: blank,
+      meta: poem.id+"番 "+poem.author
+    };
+  }
+}
+
+/* ---------- 状態 ---------- */
+var state = {
+  mode:null,
+  rangeKey:null,
+  isWeakReview:false,
+  queue:[],       // poem配列（出題順）
+  index:0,
+  score:0,
+  missedIds:[],
+  currentQuestion:null,
+  answered:false
+};
+
+/* ---------- 画面切替 ---------- */
+function showScreen(name){
+  ["screen-home","screen-quiz","screen-result","screen-weak-manage"].forEach(function(id){
+    document.getElementById(id).classList.toggle("hidden", id!==name);
+  });
+  window.scrollTo(0,0);
+}
+
+/* ---------- ホーム画面 ---------- */
+var selectedMode = null;
+var selectedRange = null;
+
+document.getElementById("mode-grid").addEventListener("click", function(e){
+  var btn = e.target.closest(".choice-btn");
+  if(!btn) return;
+  selectedMode = btn.getAttribute("data-mode");
+  Array.prototype.forEach.call(document.querySelectorAll("#mode-grid .choice-btn"), function(b){
+    b.classList.toggle("selected", b===btn);
+  });
+  updateStartBtn();
+});
+
+document.getElementById("range-grid").addEventListener("click", function(e){
+  var btn = e.target.closest(".range-btn");
+  if(!btn) return;
+  selectedRange = btn.getAttribute("data-range");
+  Array.prototype.forEach.call(document.querySelectorAll("#range-grid .range-btn"), function(b){
+    b.classList.toggle("selected", b===btn);
+  });
+  updateStartBtn();
+});
+
+function updateStartBtn(){
+  document.getElementById("start-btn").disabled = !(selectedMode && selectedRange);
+}
+
+function rangeToPoems(rangeKey){
+  if(rangeKey==="all") return POEMS.slice();
+  var parts = rangeKey.split("-");
+  var lo = parseInt(parts[0],10), hi = parseInt(parts[1],10);
+  return POEMS.filter(function(p){ return p.id>=lo && p.id<=hi; });
+}
+
+document.getElementById("start-btn").addEventListener("click", function(){
+  if(!selectedMode || !selectedRange) return;
+  startQuiz(selectedMode, rangeToPoems(selectedRange), false, selectedRange);
+});
+
+document.getElementById("weak-start-btn").addEventListener("click", function(){
+  var ids = loadWeak();
+  if(ids.length===0) return;
+  var poems = ids.map(function(id){ return POEM_BY_ID[id]; }).filter(Boolean);
+  var mode = selectedMode || "kami2shimo";
+  startQuiz(mode, poems, true, "苦手ノート");
+});
+
+document.getElementById("open-weak-manage").addEventListener("click", function(){
+  renderWeakManage();
+  showScreen("screen-weak-manage");
+});
+document.getElementById("weak-manage-back").addEventListener("click", function(){
+  showScreen("screen-home");
+});
+
+/* ---------- クイズ開始 ---------- */
+function startQuiz(mode, poems, isWeakReview, rangeLabel){
+  state.mode = mode;
+  state.isWeakReview = isWeakReview;
+  state.rangeKey = rangeLabel;
+  state.queue = shuffle(poems);
+  state.index = 0;
+  state.score = 0;
+  state.missedIds = [];
+  showScreen("screen-quiz");
+  renderQuestion();
+}
+
+function modeLabelJa(mode){
+  return {kami2shimo:"上の句 → 下の句", shimo2kami:"下の句 → 上の句", fill:"穴埋め問題", author:"作者を選ぶ"}[mode] || "";
+}
+
+function renderQuestion(){
+  state.answered = false;
+  var poem = state.queue[state.index];
+  var q = buildQuestion(poem, state.mode);
+  state.currentQuestion = q;
+
+  document.getElementById("quiz-mode-tag").textContent = q.modeLabel;
+  document.getElementById("quiz-progress-text").textContent = (state.index+1)+" / "+state.queue.length;
+  document.getElementById("quiz-score-text").textContent = "正解 "+state.score;
+  document.getElementById("progress-bar").style.width = Math.round((state.index/state.queue.length)*100)+"%";
+
+  document.getElementById("question-text").textContent = q.questionText;
+
+  var wrap = document.getElementById("answers-wrap");
+  wrap.innerHTML = "";
+  q.choices.forEach(function(choiceText){
+    var b = document.createElement("button");
+    b.className = "answer-btn";
+    b.textContent = choiceText;
+    b.addEventListener("click", function(){ onAnswer(choiceText, b); });
+    wrap.appendChild(b);
+  });
+
+  document.getElementById("feedback-text").textContent = "";
+  document.getElementById("feedback-text").className = "feedback";
+  document.getElementById("poem-meta").textContent = "";
+  document.getElementById("next-btn").classList.add("hidden");
+}
+
+function onAnswer(choiceText, btnEl){
+  if(state.answered) return;
+  state.answered = true;
+  var q = state.currentQuestion;
+  var poem = state.queue[state.index];
+  var isCorrect = (choiceText === q.correct);
+
+  Array.prototype.forEach.call(document.querySelectorAll("#answers-wrap .answer-btn"), function(b){
+    b.classList.add("disabled");
+    if(b.textContent === q.correct) b.classList.add("correct");
+    if(b===btnEl && !isCorrect) b.classList.add("wrong");
+  });
+
+  var fb = document.getElementById("feedback-text");
+  if(isCorrect){
+    state.score++;
+    fb.textContent = "○ 正解！";
+    fb.className = "feedback ok";
+    if(state.isWeakReview){ removeWeak(poem.id); }
+  }else{
+    fb.textContent = "✕ 残念、正解は上の通りです";
+    fb.className = "feedback ng";
+    state.missedIds.push(poem.id);
+    addWeak(poem.id);
+  }
+  document.getElementById("poem-meta").textContent =
+    poem.id+"番　"+poem.kami+" ／ "+poem.shimo+"　（"+poem.author+"）";
+
+  document.getElementById("quiz-score-text").textContent = "正解 "+state.score;
+  document.getElementById("progress-bar").style.width = Math.round(((state.index+1)/state.queue.length)*100)+"%";
+  document.getElementById("next-btn").classList.remove("hidden");
+}
+
+document.getElementById("next-btn").addEventListener("click", function(){
+  state.index++;
+  if(state.index >= state.queue.length){
+    renderResult();
+    showScreen("screen-result");
+  }else{
+    renderQuestion();
+  }
+});
+
+document.getElementById("quit-quiz-btn").addEventListener("click", function(){
+  showScreen("screen-home");
+});
+
+/* ---------- 結果画面 ---------- */
+function renderResult(){
+  document.getElementById("result-score-num").textContent = state.score;
+  document.getElementById("result-score-total").textContent = state.queue.length;
+
+  var rate = state.queue.length ? state.score/state.queue.length : 0;
+  var comment;
+  if(rate===1) comment = "満点！お見事です。";
+  else if(rate>=0.8) comment = "よくできました！あと少し！";
+  else if(rate>=0.5) comment = "だいぶ覚えてきました。苦手ノートで復習しよう。";
+  else comment = "まずは苦手ノートを中心に復習してみましょう。";
+  document.getElementById("result-comment").textContent = comment;
+
+  var wrap = document.getElementById("result-miss-wrap");
+  wrap.innerHTML = "";
+  if(state.missedIds.length>0){
+    var title = document.createElement("div");
+    title.className = "section-label";
+    title.textContent = "まちがえた歌（苦手ノートに追加済み）";
+    wrap.appendChild(title);
+    var list = document.createElement("div");
+    list.className = "miss-list";
+    state.missedIds.forEach(function(id){
+      var p = POEM_BY_ID[id];
+      var item = document.createElement("div");
+      item.className = "miss-item";
+      item.innerHTML =
+        '<span class="mi-no">'+p.id+'番</span>'+
+        '<div class="mi-kami">'+p.kami+'</div>'+
+        '<div class="mi-shimo">'+p.shimo+'</div>'+
+        '<div class="mi-author">'+p.author+'</div>';
+      list.appendChild(item);
+    });
+    wrap.appendChild(list);
+  }
+  refreshWeakCount();
+}
+
+document.getElementById("result-home-btn").addEventListener("click", function(){
+  showScreen("screen-home");
+});
+document.getElementById("result-retry-btn").addEventListener("click", function(){
+  var poems = state.isWeakReview ? loadWeak().map(function(id){return POEM_BY_ID[id];}).filter(Boolean) : rangeToPoems(selectedRange);
+  if(poems.length===0){ showScreen("screen-home"); return; }
+  startQuiz(state.mode, poems, state.isWeakReview, state.rangeKey);
+});
+
+/* ---------- 苦手ノート管理画面 ---------- */
+function renderWeakManage(){
+  var ids = loadWeak();
+  var wrap = document.getElementById("weak-manage-list");
+  wrap.innerHTML = "";
+  if(ids.length===0){
+    var empty = document.createElement("div");
+    empty.className = "empty-note";
+    empty.textContent = "苦手ノートはまだ空です。クイズでまちがえると自動で追加されます。";
+    wrap.appendChild(empty);
+    return;
+  }
+  ids.slice().sort(function(a,b){return a-b;}).forEach(function(id){
+    var p = POEM_BY_ID[id];
+    if(!p) return;
+    var item = document.createElement("div");
+    item.className = "wn-item";
+    item.innerHTML =
+      '<div class="wn-text">'+
+        '<div class="wn-kami">'+p.id+'. '+p.kami+'</div>'+
+        '<div class="wn-shimo">'+p.shimo+'</div>'+
+        '<div class="wn-author">'+p.author+'</div>'+
+      '</div>'+
+      '<button class="wn-remove">削除</button>';
+    item.querySelector(".wn-remove").addEventListener("click", function(){
+      removeWeak(id);
+      renderWeakManage();
+    });
+    wrap.appendChild(item);
+  });
+}
+
+/* ---------- 初期化 ---------- */
+refreshWeakCount();
+showScreen("screen-home");
+
+})();
+</script>
+</body>
+</html>
